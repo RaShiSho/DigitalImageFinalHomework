@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像对数变换</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+            text-align: center;
+        }
+        .preview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn">返回首页</a>
+        <h1>图像对数变换</h1>
+        <div class="controls">
+            <div class="form-group">
+                <label>选择图像：</label>
+                <input type="file" id="image" accept="image/*" onchange="previewImage(this, 'preview')">
+            </div>
+            <div class="form-group">
+                <label>变换参数 v：</label>
+                <input type="number" id="v" value="100" min="1">
+            </div>
+            <button onclick="processImage()">处理图片</button>
+        </div>
+        <div class="image-container">
+            <div class="image-box">
+                <h3>原始图像</h3>
+                <img id="preview" class="preview">
+            </div>
+            <div class="image-box">
+                <h3>处理结果</h3>
+                <img id="result" class="preview">
+            </div>
+        </div>
+    </div>
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function processImage() {
+            const image = document.getElementById('image').files[0];
+            const v = document.getElementById('v').value;
+            
+            if (!image) {
+                alert('请选择图片');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', image);
+            formData.append('v', v);
+            
+            try {
+                const response = await fetch('/logtrans', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('result').src = data.image;
+                } else {
+                    alert('处理失败：' + data.error);
+                }
+            } catch (error) {
+                alert('处理失败：' + error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像算术运算</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+            text-align: center;
+        }
+        .preview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn">返回首页</a>
+        <h1>图像算术运算</h1>
+        <div class="controls">
+            <div class="form-group">
+                <label>图像1：</label>
+                <input type="file" id="image1" accept="image/*" onchange="previewImage(this, 'preview1')">
+            </div>
+            <div class="form-group">
+                <label>图像2：</label>
+                <input type="file" id="image2" accept="image/*" onchange="previewImage(this, 'preview2')">
+            </div>
+            <div class="form-group">
+                <label>运算类型：</label>
+                <select id="operation">
+                    <option value="add">加法</option>
+                    <option value="subtract">减法</option>
+                    <option value="multiply">乘法</option>
+                </select>
+            </div>
+            <button onclick="processImages()">处理图片</button>
+        </div>
+        <div class="image-container">
+            <div class="image-box">
+                <h3>图像1</h3>
+                <img id="preview1" class="preview">
+            </div>
+            <div class="image-box">
+                <h3>图像2</h3>
+                <img id="preview2" class="preview">
+            </div>
+            <div class="image-box">
+                <h3>运算结果</h3>
+                <img id="result" class="preview">
+            </div>
+        </div>
+    </div>
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function processImages() {
+            const image1 = document.getElementById('image1').files[0];
+            const image2 = document.getElementById('image2').files[0];
+            const operation = document.getElementById('operation').value;
+            
+            if (!image1 || !image2) {
+                alert('请选择两张图片');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image1', image1);
+            formData.append('image2', image2);
+            formData.append('operation', operation);
+            
+            try {
+                const response = await fetch('/arithmetic', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('result').src = data.image;
+                } else {
+                    alert('处理失败：' + data.error);
+                }
+            } catch (error) {
+                alert('处理失败：' + error);
+            }
+        }
+    </script>
+</body>
+</html>

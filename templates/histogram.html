@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像直方图分析</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            max-height: 400px;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+        .equalize-section {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .equalize-section h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn">返回首页</a>
+        <h1>图像直方图分析</h1>
+        <!-- 在控制按钮部分添加新按钮 -->
+        <div class="controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <button class="btn" onclick="generateGrayHistogram()">生成灰度直方图</button>
+            <button class="btn" onclick="generateRGBHistogram()">生成RGB三通道直方图</button>
+            <button class="btn" onclick="equalizeHistogram()">灰度图均衡化</button>
+            <button class="btn" onclick="linearTransformHistogram()">灰度图分段线性变换</button>
+        </div>
+        
+        
+        <div class="image-grid">
+            <div class="image-box">
+                <h3>原图</h3>
+                <img id="originalImage">
+            </div>
+            <div class="image-box">
+                <h3 id="histogramTitle">直方图</h3>
+                <img id="histogramImage">
+            </div>
+        </div>
+        
+        <!-- 均衡化部分 -->
+        <div class="equalize-section" id="equalizeSection" style="display: none;">
+            <h2>灰度图均衡化结果</h2>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>原始灰度图</h3>
+                    <img id="originalGrayImage">
+                </div>
+                <div class="image-box">
+                    <h3>原始灰度直方图</h3>
+                    <img id="originalHistogramImage">
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>均衡化后的灰度图</h3>
+                    <img id="equalizedImage">
+                </div>
+                <div class="image-box">
+                    <h3>均衡化后的灰度直方图</h3>
+                    <img id="equalizedHistogramImage">
+                </div>
+            </div>
+        </div>
+
+         <!-- 段线性变换部分 -->
+        <div class="equalize-section" id="linearTransformSection" style="display: none;">
+            <h2>灰度图分段线性变换结果</h2>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>原始灰度图</h3>
+                    <img id="originalLinearImage">
+                </div>
+                <div class="image-box">
+                    <h3>原始灰度直方图</h3>
+                    <img id="originalLinearHistogramImage">
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>分段线性变换后的灰度图</h3>
+                    <img id="transformedImage">
+                </div>
+                <div class="image-box">
+                    <h3>分段线性变换后的灰度直方图</h3>
+                    <img id="transformedHistogramImage">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentImage = null;
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('originalImage').src = e.target.result;
+                    currentImage = file;
+                    // 隐藏均衡化部分
+                    document.getElementById('equalizeSection').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function generateGrayHistogram() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+            await generateHistogram('gray');
+        }
+
+        async function generateRGBHistogram() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+            await generateHistogram('rgb');
+        }
+
+        async function generateHistogram(type) {
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            formData.append('type', type);
+
+            try {
+                const response = await fetch('/generate_histogram', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('网络请求失败');
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('histogramImage').src = data.histogram;
+                    document.getElementById('histogramTitle').textContent = data.title;
+                    // 隐藏均衡化部分
+                    document.getElementById('equalizeSection').style.display = 'none';
+                } else {
+                    alert(data.error || '处理失败');
+                }
+            } catch (error) {
+                alert('处理失败：' + error.message);
+            }
+        }
+        
+        async function equalizeHistogram() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            
+            try {
+                const response = await fetch('/equalize_histogram', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('网络请求失败');
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 显示均衡化部分
+                    document.getElementById('equalizeSection').style.display = 'block';
+                    
+                    // 设置图像
+                    document.getElementById('originalGrayImage').src = data.original;
+                    document.getElementById('originalHistogramImage').src = data.original_histogram;
+                    document.getElementById('equalizedImage').src = data.equalized;
+                    document.getElementById('equalizedHistogramImage').src = data.equalized_histogram;
+                    
+                    // 滚动到均衡化部分
+                    document.getElementById('equalizeSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(data.error || '处理失败');
+                }
+            } catch (error) {
+                alert('处理失败：' + error.message);
+            }
+        }
+
+        async function linearTransformHistogram() {
+                if (!currentImage) {
+                    alert('请先选择图片');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('image', currentImage);
+                
+                try {
+                    const response = await fetch('/linear_transform_histogram', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) throw new Error('网络请求失败');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        // 隐藏均衡化部分
+                        document.getElementById('equalizeSection').style.display = 'none';
+                        // 显示分段线性变换部分
+                        document.getElementById('linearTransformSection').style.display = 'block';
+                        
+                        // 设置图像
+                        document.getElementById('originalLinearImage').src = data.original;
+                        document.getElementById('originalLinearHistogramImage').src = data.original_histogram;
+                        document.getElementById('transformedImage').src = data.transformed;
+                        document.getElementById('transformedHistogramImage').src = data.transformed_histogram;
+                        
+                        // 滚动到分段线性变换部分
+                        document.getElementById('linearTransformSection').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert(data.error || '处理失败');
+                    }
+                } catch (error) {
+                    alert('处理失败：' + error.message);
+                }
+            }
+    </script>
+</body>
+</html>
