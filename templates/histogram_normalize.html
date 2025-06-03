@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像直方图正规化</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            max-height: 400px;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            margin-right: 10px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+        .normalize-section {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .normalize-section h2 {
+            margin-bottom: 20px;
+        }
+        .file-inputs {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .file-input-group {
+            margin-right: 20px;
+        }
+        .file-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <a href="/" class="home-btn">返回首页</a>
+            <a href="/histogram" class="home-btn">返回直方图分析</a>
+        </div>
+        <h1>图像直方图正规化</h1>
+        
+        <div class="file-inputs">
+            <div class="file-input-group">
+                <label for="sourceImageInput">选择原图像：</label>
+                <input type="file" id="sourceImageInput" accept="image/*">
+            </div>
+            <div class="file-input-group">
+                <label for="targetImageInput">选择目标图像：</label>
+                <input type="file" id="targetImageInput" accept="image/*">
+            </div>
+            <button class="btn" onclick="normalizeHistogram()">执行直方图正规化</button>
+        </div>
+        
+        <div class="normalize-section" id="normalizeSection" style="display: none;">
+            <h2>直方图正规化结果</h2>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>原图像</h3>
+                    <img id="sourceImage">
+                </div>
+                <div class="image-box">
+                    <h3>原图像灰度直方图</h3>
+                    <img id="sourceHistogramImage">
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>目标图像</h3>
+                    <img id="targetImage">
+                </div>
+                <div class="image-box">
+                    <h3>目标图像灰度直方图</h3>
+                    <img id="targetHistogramImage">
+                </div>
+            </div>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>正规化后的图像</h3>
+                    <img id="normalizedImage">
+                </div>
+                <div class="image-box">
+                    <h3>正规化后的灰度直方图</h3>
+                    <img id="normalizedHistogramImage">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let sourceImage = null;
+        let targetImage = null;
+
+        document.getElementById('sourceImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                sourceImage = file;
+            }
+        });
+
+        document.getElementById('targetImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                targetImage = file;
+            }
+        });
+
+        async function normalizeHistogram() {
+            if (!sourceImage || !targetImage) {
+                alert('请先选择原图像和目标图像');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('source_image', sourceImage);
+            formData.append('target_image', targetImage);
+            
+            try {
+                const response = await fetch('/normalize_histogram', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('网络请求失败');
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 显示正规化部分
+                    document.getElementById('normalizeSection').style.display = 'block';
+                    
+                    // 设置图像
+                    document.getElementById('sourceImage').src = data.source;
+                    document.getElementById('sourceHistogramImage').src = data.source_histogram;
+                    document.getElementById('targetImage').src = data.target;
+                    document.getElementById('targetHistogramImage').src = data.target_histogram;
+                    document.getElementById('normalizedImage').src = data.normalized;
+                    document.getElementById('normalizedHistogramImage').src = data.normalized_histogram;
+                    
+                    // 滚动到正规化部分
+                    document.getElementById('normalizeSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(data.error || '处理失败');
+                }
+            } catch (error) {
+                alert('处理失败：' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

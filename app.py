@@ -133,5 +133,23 @@ def linear_transform_histogram():
     result = HistogramProcessor.linear_transform_histogram(request.files['image'])
     return jsonify(result)
 
+# 添加直方图正规化页面路由
+@app.route('/histogram_normalize')
+def histogram_normalize():
+    return render_template('histogram_normalize.html')
+
+# 添加直方图正规化处理路由
+@app.route('/normalize_histogram', methods=['POST'])
+def normalize_histogram():
+    if 'source_image' not in request.files or 'target_image' not in request.files:
+        return jsonify({"success": False, "error": "请上传原图像和目标图像"})
+    
+    result = HistogramProcessor.normalize_histogram(
+        request.files['source_image'],
+        request.files['target_image']
+    )
+    return jsonify(result)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -69,11 +69,11 @@ class HistogramProcessor:
             equalized_hist = cv2.calcHist([equalized_img], [0], None, [256], [0, 256])
             
             # 创建原始灰度直方图图表
-            HistogramProcessor._create_histogram_plot(orig_hist, title="原始灰度直方图")
+            HistogramProcessor._create_histogram_plot(orig_hist)
             orig_hist_image = HistogramProcessor._plot_to_base64()
             
            # 创建均衡化后的灰度直方图图表
-            HistogramProcessor._create_histogram_plot(equalized_hist, title="均衡化后的灰度直方图")
+            HistogramProcessor._create_histogram_plot(equalized_hist)
             equalized_hist_image = HistogramProcessor._plot_to_base64()
             
             # 转换原始和均衡化后的灰度图为base64
@@ -127,11 +127,11 @@ class HistogramProcessor:
             transformed_hist = cv2.calcHist([transformed_img], [0], None, [256], [0, 256])
             
             # 创建原始灰度直方图图表
-            HistogramProcessor._create_histogram_plot(orig_hist, title="原始灰度直方图")
+            HistogramProcessor._create_histogram_plot(orig_hist)
             orig_hist_image = HistogramProcessor._plot_to_base64()
             
             # 创建变换后的灰度直方图图表
-            HistogramProcessor._create_histogram_plot(transformed_hist, title="分段线性变换后的灰度直方图")
+            HistogramProcessor._create_histogram_plot(transformed_hist)
             transformed_hist_image = HistogramProcessor._plot_to_base64()
             
             # 转换原始和变换后的灰度图为base64
@@ -151,6 +151,110 @@ class HistogramProcessor:
                 "success": False,
                 "error": str(e)
             }
+
+    @staticmethod
+    def normalize_histogram(source_file, target_file):
+        try:
+            # 读取原图像和目标图像
+            source_img = HistogramProcessor._read_image(source_file)
+            target_file.seek(0)  # 重置文件指针
+            target_img = HistogramProcessor._read_image(target_file)
+            
+            # 计算原图像直方图
+            source_hist = np.zeros(256, dtype=np.int32)
+            h, w = source_img.shape
+            for i in range(h):
+                for j in range(w):
+                    source_hist[source_img[i, j]] += 1
+            
+            # 计算目标图像直方图
+            target_hist = np.zeros(256, dtype=np.int32)
+            th, tw = target_img.shape
+            for i in range(th):
+                for j in range(tw):
+                    target_hist[target_img[i, j]] += 1
+            
+            # 计算原图像的累积分布函数
+            source_cdf = np.zeros(256, dtype=np.float64)
+            source_cdf[0] = source_hist[0] / source_img.size
+            for i in range(1, 256):
+                source_cdf[i] = source_cdf[i-1] + source_hist[i] / source_img.size
+            
+            # 计算目标图像的累积分布函数
+            target_cdf = np.zeros(256, dtype=np.float64)
+            target_cdf[0] = target_hist[0] / target_img.size
+            for i in range(1, 256):
+                target_cdf[i] = target_cdf[i-1] + target_hist[i] / target_img.size
+            
+            # 将累积分布函数映射到 0-255
+            source_cdf_mapped = np.round(source_cdf * 255).astype(np.uint8)
+            target_cdf_mapped = np.round(target_cdf * 255).astype(np.uint8)
+            
+            # 创建映射表
+            mapping = np.zeros(256, dtype=np.uint8)
+            for i in range(256):
+                a = source_cdf_mapped[i]
+                min_diff = 255
+                min_j = 0
+                for j in range(256):
+                    diff = abs(int(target_cdf_mapped[j]) - int(a))
+                    if diff < min_diff:
+                        min_diff = diff
+                        min_j = j
+                mapping[i] = min_j
+            
+            # 应用映射到原图像
+            normalized_img = np.zeros_like(source_img)
+            for i in range(h):
+                for j in range(w):
+                    normalized_img[i, j] = mapping[source_img[i, j]]
+            
+            # 计算原始灰度直方图
+            source_hist_cv = cv2.calcHist([source_img], [0], None, [256], [0, 256])
+            
+            # 计算目标灰度直方图
+            target_hist_cv = cv2.calcHist([target_img], [0], None, [256], [0, 256])
+            
+            # 计算正规化后的灰度直方图
+            normalized_hist = cv2.calcHist([normalized_img], [0], None, [256], [0, 256])
+            
+            # 创建原始灰度直方图图表
+            HistogramProcessor._create_histogram_plot(source_hist_cv)
+            source_hist_image = HistogramProcessor._plot_to_base64()
+            
+            # 创建目标灰度直方图图表
+            HistogramProcessor._create_histogram_plot(target_hist_cv)
+            target_hist_image = HistogramProcessor._plot_to_base64()
+            
+            # 创建正规化后的灰度直方图图表
+            HistogramProcessor._create_histogram_plot(normalized_hist)
+            normalized_hist_image = HistogramProcessor._plot_to_base64()
+            
+            # 转换原始灰度图为base64
+            source_image = HistogramProcessor._image_to_base64(source_img)
+            
+            # 转换目标灰度图为base64
+            target_image = HistogramProcessor._image_to_base64(target_img)
+            
+            # 转换正规化后的灰度图为base64
+            normalized_image = HistogramProcessor._image_to_base64(normalized_img)
+            
+            return {
+                "success": True,
+                "source": source_image,
+                "target": target_image,
+                "normalized": normalized_image,
+                "source_histogram": source_hist_image,
+                "target_histogram": target_hist_image,
+                "normalized_histogram": normalized_hist_image
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
 
     @staticmethod
     def _read_image(image_file, grayscale=True):

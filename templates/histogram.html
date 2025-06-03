@@ -66,13 +66,13 @@
     <div class="container">
         <a href="/" class="home-btn">返回首页</a>
         <h1>图像直方图分析</h1>
-        <!-- 在控制按钮部分添加新按钮 -->
         <div class="controls">
             <input type="file" id="imageInput" accept="image/*">
             <button class="btn" onclick="generateGrayHistogram()">生成灰度直方图</button>
             <button class="btn" onclick="generateRGBHistogram()">生成RGB三通道直方图</button>
             <button class="btn" onclick="equalizeHistogram()">灰度图均衡化</button>
             <button class="btn" onclick="linearTransformHistogram()">灰度图分段线性变换</button>
+            <a href="/histogram_normalize" class="btn">灰度图直方图正规化</a>
         </div>
         
         
@@ -267,13 +267,13 @@
                         
                         // 滚动到分段线性变换部分
                         document.getElementById('linearTransformSection').scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                        alert(data.error || '处理失败');
-                    }
-                } catch (error) {
-                    alert('处理失败：' + error.message);
+                } else {
+                    alert(data.error || '处理失败');
                 }
+            } catch (error) {
+                alert('处理失败：' + error.message);
             }
+        }
     </script>
 </body>
 </html>
