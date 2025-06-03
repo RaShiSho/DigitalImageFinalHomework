@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像分割</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            max-height: 400px;
+        }
+        .section {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .section h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn">返回首页</a>
+        <h1>图像分割</h1>
+        
+        <div class="controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <button class="btn" onclick="basicDetailEnhancement()">基本细节增强</button>
+        </div>
+
+        <div class="image-grid">
+            <div class="image-box">
+                <h3>原图</h3>
+                <img id="originalImage">
+            </div>
+            <div class="image-box">
+                <h3>原始灰度图</h3>
+                <img id="originalGrayImage">
+            </div>
+        </div>
+
+        <div class="section" id="basicEnhanceSection" style="display: none;">
+            <h2>基本细节增强结果</h2>
+            <div class="image-grid">
+                <div class="image-box">
+                    <h3>梯度图</h3>
+                    <img id="gradientImage">
+                </div>
+                <div class="image-box">
+                    <h3>增强灰度图</h3>
+                    <img id="enhancedGrayImage">
+                </div>
+            </div>
+        </div>
+       
+        
+    </div>
+
+    <script>
+        let currentImage = null;
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('originalImage').src = e.target.result;
+                    currentImage = file;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function basicDetailEnhancement() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', currentImage);
+
+            try {
+                const response = await fetch('/basic_enhance_detail', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('basicEnhanceSection').style.display = 'block';
+
+                        document.getElementById('originalGrayImage').src = result.originalGrayImage;
+                        document.getElementById('gradientImage').src = result.gradientImage;
+                        document.getElementById('enhancedGrayImage').src = result.enhancedGrayImage;
+                    } else {
+                        alert(result.error || '处理失败');
+                    }
+                } else {
+                    alert('处理请求失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理过程中发生错误');
+            }
+        }
+
+    </script>
+
+</body>
+</html>

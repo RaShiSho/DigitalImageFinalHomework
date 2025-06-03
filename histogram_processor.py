@@ -3,7 +3,6 @@ import numpy as np
 import base64
 import matplotlib.pyplot as plt
 import io
-# 在文件顶部导入部分添加
 import matplotlib
 matplotlib.use('Agg')  # 使用非交互式后端
 

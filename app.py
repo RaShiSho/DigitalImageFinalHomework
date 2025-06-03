@@ -6,6 +6,7 @@ from colorspace_processor import ColorSpaceProcessor
 from arithmetic_processor import ArithmeticProcessor
 from logtrans_processor import LogTransProcessor
 from histogram_processor import HistogramProcessor
+from segmentation_processor import SegmentationProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -133,12 +134,12 @@ def linear_transform_histogram():
     result = HistogramProcessor.linear_transform_histogram(request.files['image'])
     return jsonify(result)
 
-# 添加直方图正规化页面路由
+
 @app.route('/histogram_normalize')
 def histogram_normalize():
     return render_template('histogram_normalize.html')
 
-# 添加直方图正规化处理路由
+
 @app.route('/normalize_histogram', methods=['POST'])
 def normalize_histogram():
     if 'source_image' not in request.files or 'target_image' not in request.files:
@@ -150,6 +151,18 @@ def normalize_histogram():
     )
     return jsonify(result)
 
+
+@app.route('/segmentation')
+def segmentation():
+    return render_template('segmentation.html')
+
+@app.route('/basic_enhance_detail', methods=['POST'])
+def basic_enhance_detail():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    result = SegmentationProcessor.basic_enhance_detail(request.files['image'])
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)
