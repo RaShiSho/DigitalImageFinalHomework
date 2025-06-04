@@ -173,5 +173,13 @@ def edge_detection():
     result = SegmentationProcessor.edge_detection(request.files['image'], operator)
     return jsonify(result)
 
+@app.route('/line_change_detection', methods=['POST'])
+def line_change_detection():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    result = SegmentationProcessor.line_change_detection(request.files['image'])
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True)
