@@ -164,5 +164,14 @@ def basic_enhance_detail():
     result = SegmentationProcessor.basic_enhance_detail(request.files['image'])
     return jsonify(result)
 
+@app.route('/edge_detection', methods=['POST'])
+def edge_detection():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    operator = request.form.get('operator', 'roberts')
+    result = SegmentationProcessor.edge_detection(request.files['image'], operator)
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True)

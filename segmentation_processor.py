@@ -45,6 +45,93 @@ class SegmentationProcessor:
                 "error": str(e)
             }
 
+    @staticmethod
+    def edge_detection(image_file, operator='Roberts'):
+        try:
+            # 转为灰度图
+            gray = SegmentationProcessor._read_image(image_file)
+
+            if operator.lower() == 'roberts':
+                # Roberts 算子
+                kernelx = np.array([[-1, 0], [0, 1]], dtype=int)
+                kernely = np.array([[0, -1], [1, 0]], dtype=int)
+                x = cv2.filter2D(gray, cv2.CV_16S, kernelx)
+                y = cv2.filter2D(gray, cv2.CV_16S, kernely)
+                absX = cv2.convertScaleAbs(x)
+                absY = cv2.convertScaleAbs(y)
+                result = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)
+
+            elif operator.lower() == 'sobel':
+                # Sobel 算子
+                grad_x = cv2.Sobel(gray, cv2.CV_16S, 1, 0)
+                grad_y = cv2.Sobel(gray, cv2.CV_16S, 0, 1)
+                absX = cv2.convertScaleAbs(grad_x)
+                absY = cv2.convertScaleAbs(grad_y)
+                result = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)
+
+            elif operator.lower() == 'laplacian':
+                # Laplacian 算子
+                blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+                dst = cv2.Laplacian(blurred, cv2.CV_16S, ksize=3)
+                result = cv2.convertScaleAbs(dst)
+
+            elif operator.lower() == 'log':
+                # LoG 算子
+                # 先对原图做边缘扩充再高斯模糊
+                extended = cv2.copyMakeBorder(gray, 2, 2, 2, 2, borderType=cv2.BORDER_REPLICATE)
+                blurred = cv2.GaussianBlur(extended, (3, 3), 0, 0)
+                # 定义 LoG 核
+                m1 = np.array([
+                    [0, 0, -1, 0, 0],
+                    [0, -1, -2, -1, 0],
+                    [-1, -2, 16, -2, -1],
+                    [0, -1, -2, -1, 0],
+                    [0, 0, -1, 0, 0]
+                ])
+
+                r, c = blurred.shape
+                image1 = np.zeros(blurred.shape)
+
+                
+                for i in range(2, r - 2):
+                    for j in range(2, c - 2):
+                        image1[i, j] = np.sum((m1 * blurred[i - 2:i + 3, j - 2:j + 3]))
+
+                result = cv2.convertScaleAbs(image1)
+
+                    # 为了对每个通道都进行卷积，需要分通道处理，再合并
+                    # channels = cv2.split(blurred)
+                    # filtered_channels = []
+                    # for ch in channels:
+                    #     ch = ch.astype(np.int32)
+                    #     r, c = ch.shape
+                    #     temp = np.zeros_like(ch)
+                    #     for i in range(2, r - 2):
+                    #         for j in range(2, c - 2):
+                    #             region = ch[i - 2:i + 3, j - 2:j + 3]
+                    #             temp[i, j] = np.sum(region * m1)
+                    #     filtered_channels.append(cv2.convertScaleAbs(temp))
+                    # result = cv2.merge(filtered_channels)
+
+            else:
+                raise ValueError(f"不支持的算子类型：{operator}，可选值为 'roberts', 'sobel', 'laplacian', 'log'。")
+
+            # 将结果图转为 Base64
+            gray_image = SegmentationProcessor._image_to_base64(gray)
+            result_base64 = SegmentationProcessor._image_to_base64(result)
+
+            return {
+                "success": True,
+                "originalGrayImage": gray_image,
+                "edgeImage": result_base64
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
 
     @staticmethod
     def _read_image(image_file, grayscale=True):
