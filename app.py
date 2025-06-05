@@ -7,6 +7,7 @@ from arithmetic_processor import ArithmeticProcessor
 from logtrans_processor import LogTransProcessor
 from histogram_processor import HistogramProcessor
 from segmentation_processor import SegmentationProcessor
+from smooth_processor import SmoothProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -180,6 +181,30 @@ def line_change_detection():
     
     result = SegmentationProcessor.line_change_detection(request.files['image'])
     return jsonify(result)
+
+
+@app.route('/smooth')
+def smooth():
+    return render_template('smooth.html')
+
+@app.route('/frequency_smoothing', methods=['POST'])
+def frequency_smoothing():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    filter = request.form.get('filter', 'Ideal')
+    result = SmoothProcessor.frequency_domain_smoothing(request.files['image'], filter)
+    return jsonify(result)
+
+@app.route('/spatial_smoothing', methods=['POST'])
+def spatial_smoothing():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    filter = request.form.get('filter', 'Mean')
+    result = SmoothProcessor.spatial_domain_smoothing(request.files['image'], filter)
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
