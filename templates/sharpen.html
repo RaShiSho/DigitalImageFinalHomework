@@ -92,7 +92,7 @@
             <select id="spatialOperatorSelect" class="selector">
                 <option value="roberts">Roberts 算子</option>
                 <option value="sobel">Sobel 算子</option>
-                <option value="prewitt">Prewitt 边缘算子</option>
+                <option value="prewitt">Prewitt 算子</option>
                 <option value="laplacian">Laplacian 算子</option>
             </select>
             <div id="loadingIndicator" class="loader"></div> 
@@ -128,10 +128,10 @@
         <div class="section" id="spatialSharpenSection" style="display: none;">
             <h2>空域平滑结果</h2>
             <div class="image-grid">
-                <!-- <div class="image-box">
-                    <h3>滤波器图</h3>
-                    <img id="spatialFilterImage">
-                </div> -->
+                <div class="image-box">
+                    <h3>原灰度图</h3>
+                    <img id="spatialGrayImage">
+                </div>
                 <div class="image-box">
                     <h3>处理结果图</h3>
                     <img id="spatialResultImage">
@@ -221,6 +221,7 @@
                     if (result.success) {
                         document.getElementById('spatialSharpenSection').style.display = 'block';
 
+                        document.getElementById('spatialGrayImage').src = result.grayImage;
                         document.getElementById('spatialResultImage').src = result.resultImage;
                     } else {
                         alert(result.error || '处理失败');
