@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像锐化</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 100%;
+            max-height: 400px;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .home-btn:hover {
+            background-color: #218838;
+        }
+        .selector {
+            width: 120px;
+            height: 30px;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            display: none; /* 初始隐藏 */
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-btn">返回首页</a>
+        <h1>图像锐化操作</h1>
+        
+        <div class="controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <button class="btn" onclick="frequencySharpening()">频域锐化</button>
+            <label for="ty">高通滤波器：</label>
+            <select id="frequencyFilterSelect" class="selector">
+                <option value="ideal">理想高通滤波</option>
+                <option value="butterworth">巴特沃斯滤波</option>
+                <option value="gauss">高斯滤波</option>
+            </select>
+            <button class="btn" onclick="spatialSharpening()">空域锐化</button>
+            <label for="ty">梯度算子：</label>
+            <select id="spatialOperatorSelect" class="selector">
+                <option value="roberts">Roberts 算子</option>
+                <option value="sobel">Sobel 算子</option>
+                <option value="prewitt">Prewitt 边缘算子</option>
+                <option value="laplacian">Laplacian 算子</option>
+            </select>
+            <div id="loadingIndicator" class="loader"></div> 
+        </div>
+        
+        
+        <div class="image-grid">
+            <div class="image-box">
+                <h3>原图</h3>
+                <img id="originalImage">
+            </div>
+            
+        </div>
+
+        <div class="section" id="frequencySharpenSection" style="display: none;">
+            <h2>频域平滑结果</h2>
+            <div class="image-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="image-box">
+                    <h3>频域图</h3>
+                    <img id="frequencyDomainImage">
+                </div>
+                <div class="image-box">
+                    <h3>滤波器图</h3>
+                    <img id="frequencyFilterImage">
+                </div>
+                <div class="image-box">
+                    <h3>处理结果图</h3>
+                    <img id="frequencyResultImage">
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="spatialSharpenSection" style="display: none;">
+            <h2>空域平滑结果</h2>
+            <div class="image-grid">
+                <!-- <div class="image-box">
+                    <h3>滤波器图</h3>
+                    <img id="spatialFilterImage">
+                </div> -->
+                <div class="image-box">
+                    <h3>处理结果图</h3>
+                    <img id="spatialResultImage">
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        let currentImage = null;
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('originalImage').src = e.target.result;
+                    currentImage = file;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function frequencySharpening() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block'; // 显示加载指示器
+
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            formData.append('filter', document.getElementById('frequencyFilterSelect').value);
+
+            try {
+                const response = await fetch('/frequency_sharpening', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('frequencySharpenSection').style.display = 'block';
+
+                        document.getElementById('frequencyResultImage').src = result.resultImage;
+                        document.getElementById('frequencyFilterImage').src = result.filterImage;
+                        document.getElementById('frequencyDomainImage').src = result.frequencyImage;
+                    } else {
+                        alert(result.error || '处理失败');
+                    }
+                } else {
+                    alert('处理请求失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理过程中发生错误');
+            } finally {
+                loadingIndicator.style.display = 'none'; // 隐藏加载指示器
+            }
+        }
+
+        async function spatialSharpening() {
+            if (!currentImage) {
+                alert('请先选择图片');
+                return;
+            }
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block'; // 显示加载指示器
+
+            const formData = new FormData();
+            formData.append('image', currentImage);
+            formData.append('operator', document.getElementById('spatialOperatorSelect').value);
+
+            try {
+                const response = await fetch('/spatial_sharpening', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('spatialSharpenSection').style.display = 'block';
+
+                        document.getElementById('spatialResultImage').src = result.resultImage;
+                    } else {
+                        alert(result.error || '处理失败');
+                    }
+                } else {
+                    alert('处理请求失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理过程中发生错误');
+            } finally {
+                loadingIndicator.style.display = 'none'; // 隐藏加载指示器
+            }
+        }
+
+
+    </script>
+</body>
+</html>

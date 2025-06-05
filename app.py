@@ -8,6 +8,7 @@ from logtrans_processor import LogTransProcessor
 from histogram_processor import HistogramProcessor
 from segmentation_processor import SegmentationProcessor
 from smooth_processor import SmoothProcessor
+from sharpen_processor import SharpenProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -204,6 +205,30 @@ def spatial_smoothing():
     filter = request.form.get('filter', 'Mean')
     result = SmoothProcessor.spatial_domain_smoothing(request.files['image'], filter)
     return jsonify(result)
+
+
+@app.route('/sharpen')
+def sharpen():
+    return render_template('sharpen.html')
+
+@app.route('/frequency_sharpening', methods=['POST'])
+def frequency_sharpening():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    filter = request.form.get('filter', 'Ideal')
+    result = SharpenProcessor.frequency_domain_sharpening(request.files['image'], filter)
+    return jsonify(result)
+
+@app.route('/spatial_sharpening', methods=['POST'])
+def spatial_sharpening():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+    
+    operator = request.form.get('operator', 'Roberts')
+    result = SharpenProcessor.spatial_domain_sharpening(request.files['image'], operator)
+    return jsonify(result)
+
 
 
 if __name__ == '__main__':
