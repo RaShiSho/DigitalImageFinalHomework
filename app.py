@@ -278,5 +278,29 @@ def mean_filter():
     result = RestoreProcessor.meanFiltering(request.files['image'], filter_x, filter_y)
     return jsonify(result)
 
+@app.route('/statistical_filter', methods=['POST'])
+def statistical_filter():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    filter_x = request.form.get('filter_x', 3)
+    filter_y = request.form.get('filter_y', 3)
+    type = request.form.get('type', 'median')
+    result = RestoreProcessor.statisticalFiltering(request.files['image'], type, filter_x, filter_y)
+    return jsonify(result)
+
+@app.route('/selective_filter', methods=['POST'])
+def selective_filter():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    filter_x = request.form.get('filter_x', 3)
+    filter_y = request.form.get('filter_y', 3)
+    type = request.form.get('type', 'bandPass') 
+    up = request.form.get('up', 220)
+    down = request.form.get('down', 20)
+    result = RestoreProcessor.selectiveFiltering(request.files['image'], up, down, type)
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True)

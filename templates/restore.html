@@ -146,12 +146,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="tx">上限：</label>
-                            <input class="ipt" type="number" id="up" value="20">
+                            <label for="ty">下限：</label>
+                            <input class="ipt" type="number" id="low" value="20">
                         </div>
                         <div class="form-group">
-                            <label for="ty">下限：</label>
-                            <input class="ipt" type="number" id="low" value="220">
+                            <label for="tx">上限：</label>
+                            <input class="ipt" type="number" id="up" value="220">
                         </div>
                     </div>
                 </details>
@@ -297,7 +297,7 @@
             formData.append('image', currentImage);
             formData.append('filter_x', filterX);
             formData.append('filter_y', filterY);
-            formData.append('kind', document.getElementById('statisticalSelect').value);
+            formData.append('type', document.getElementById('statisticalSelect').value);
 
             try {
                 const response = await fetch('/statistical_filter', {
@@ -323,7 +323,7 @@
             }
         }
 
-        async function statisticalFiltering() {
+        async function selectiveFiltering() {
             if (!currentImage) {
                 alert('请先选择图片');
                 return;
@@ -341,7 +341,7 @@
             formData.append('image', currentImage);
             formData.append('filter_x', filterX);
             formData.append('filter_y', filterY);
-            formData.append('selectWay', document.getElementById('selectiveWaySelect').value);
+            formData.append('type', document.getElementById('selectiveWaySelect').value);
             formData.append('up', document.getElementById('up').value);
             formData.append('low', document.getElementById('low').value);
 
