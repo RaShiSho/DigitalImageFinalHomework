@@ -9,6 +9,7 @@ from histogram_processor import HistogramProcessor
 from segmentation_processor import SegmentationProcessor
 from smooth_processor import SmoothProcessor
 from sharpen_processor import SharpenProcessor
+from morphology_processor import MorphologyProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -230,6 +231,27 @@ def spatial_sharpening():
     return jsonify(result)
 
 
+@app.route('/morphology')
+def morphology():
+    return render_template('morphology.html')
+
+@app.route('/morphology_processor', methods=['POST'])
+def morphology_processor():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    operation = request.form.get('operation', 'erosion')
+    shape = request.form.get('shape', 'cross')
+    kernel_x = request.form.get('kernel_x', '5')
+    kernel_y = request.form.get('kernel_y', '5')
+    result = MorphologyProcessor.morphology_processor(
+        request.files['image'], 
+        operation, 
+        shape, 
+        kernel_x, 
+        kernel_y
+    )
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)
