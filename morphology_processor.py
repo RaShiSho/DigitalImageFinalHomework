@@ -65,7 +65,7 @@ class MorphologyProcessor:
         if grayscale:
             return cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
         else:
-            return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            return cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
 
     @staticmethod
     def _image_to_base64(img):

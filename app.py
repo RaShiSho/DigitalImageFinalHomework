@@ -10,6 +10,7 @@ from segmentation_processor import SegmentationProcessor
 from smooth_processor import SmoothProcessor
 from sharpen_processor import SharpenProcessor
 from morphology_processor import MorphologyProcessor
+from restore_processor import RestoreProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -251,6 +252,30 @@ def morphology_processor():
         kernel_x, 
         kernel_y
     )
+    return jsonify(result)
+
+
+@app.route('/restore')
+def restore():
+    return render_template('restore.html')
+
+@app.route('/add_noise', methods=['POST'])
+def add_noise():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    noise_type = request.form.get('noise_type', 'saltpepper')
+    result = RestoreProcessor.add_noise(request.files['image'], noise_type)
+    return jsonify(result)
+
+@app.route('/mean_filter', methods=['POST'])
+def mean_filter():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    filter_x = request.form.get('filter_x', 3)
+    filter_y = request.form.get('filter_y', 3)
+    result = RestoreProcessor.meanFiltering(request.files['image'], filter_x, filter_y)
     return jsonify(result)
 
 if __name__ == '__main__':
