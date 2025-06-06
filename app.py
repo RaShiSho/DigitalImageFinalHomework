@@ -11,6 +11,7 @@ from smooth_processor import SmoothProcessor
 from sharpen_processor import SharpenProcessor
 from morphology_processor import MorphologyProcessor
 from restore_processor import RestoreProcessor
+from wavelet_processor import WaveletProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -301,6 +302,23 @@ def selective_filter():
     down = request.form.get('down', 20)
     result = RestoreProcessor.selectiveFiltering(request.files['image'], up, down, type)
     return jsonify(result)
+
+
+
+@app.route('/wavelettrans')
+def wavelettrans():
+    return render_template('wavelettrans.html')
+
+@app.route('/wavelet_transform', methods=['POST'])
+def wavelet_transform():
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "没有上传图片"})
+
+    type = request.form.get('type', 'haar')
+    level = request.form.get('level', 1)
+    result = WaveletProcessor.wavelet_transform(request.files['image'], type, level)
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
